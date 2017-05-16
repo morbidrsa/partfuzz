@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#define _POSIX_C_SOURCE 200112L
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -298,6 +299,8 @@ int main(int argc, char **argv)
 	struct partition_table *partition;
 	enum partition_type ptype = ULTRIX_PARTITION_TYPE;
 	ssize_t written;
+	off_t offset;
+	off_t disksize = 1099511627776; /* 1TB */
 	int opt;
 	int fd;
 
@@ -338,6 +341,11 @@ int main(int argc, char **argv)
 	if (fd < 0) {
 		perror("open()");
 		return 1;
+	}
+
+	if (ftruncate(fd, disksize)) {
+		perror("ftruncate()");
+		goto out_close;
 	}
 
 	partition = generate_partition(ptype);
