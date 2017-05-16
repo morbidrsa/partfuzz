@@ -31,7 +31,7 @@ check_log()
 run_one_test()
 {
 	local kernel=$1; shift
-	local initrd=$1 shift
+	local initrd=$1; shift
 	local pt=$1
 
 	if [ ! -e $kernel ]; then
@@ -46,12 +46,14 @@ run_one_test()
 
 	./partfuzz -t "$pt" $FILE || die "enerating partition table in $FILE failed"
 	qemu-system-x86_64 -enable-kvm -m 512 -smp 2 -kernel $kernel \
-		-initrd $initrd -append "console=ttyS0" -nographic \
-		-serial mon:stdio -hda $FILE | tee $FILE.log
+		-initrd $initrd -append "console=ttyS0 init='sh -c \"echo o > /proc/sysrq-trigger\"" -nographic \
+		-drive file=$FILE,id=D22,if=none,format=raw \
+		-device nvme,drive=D22,serial=1234 \
+		-serial mon:stdio | tee $FILE.log
 
 	check_log $FILE.log || die "Test $i failed. Logfile $FILE.log, partition table $FILE"
 
-	rm $FILE
+	rm $FILE $FILE.log
 }
 
 main()
