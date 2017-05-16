@@ -119,8 +119,21 @@ free_table:
 	return 0;
 }
 
+static const char *part2str(enum partition_type ptype)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(pt_table); i++)
+		if (pt_table[i].ptype == ptype)
+			return pt_table[i].name;
+
+	return "UNKNOWN";
+}
+
 static struct partition_table *generate_partition(enum partition_type ptype)
 {
+	debug(cfg, "generating %s partition\n", part2str(ptype));
+
 	switch (ptype) {
 	case ULTRIX_PARTITION_TYPE:
 		return generate_ultrix_partition();
