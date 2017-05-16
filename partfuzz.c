@@ -303,7 +303,7 @@ int main(int argc, char **argv)
 	enum partition_type ptype = ULTRIX_PARTITION_TYPE;
 	ssize_t written;
 	off_t offset;
-	off_t disksize = 1099511627776; /* 1TB */
+	off_t disksize = 2199023255552; /* 2TB */
 	int opt;
 	int fd;
 
