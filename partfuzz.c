@@ -101,6 +101,7 @@ static struct {
 struct partition_table {
 	size_t size;
 	void *part;
+	unsigned int sector;
 	unsigned int offset;
 };
 
@@ -129,6 +130,7 @@ static struct partition_table *generate_osf_partition(void)
 	}
 
 	table->size = sizeof(struct osf_disklabel);
+	table->sector = 0;
 	table->offset = 64;
 
 	label = calloc(table->size, 1);
@@ -202,7 +204,8 @@ static struct partition_table *generate_ultrix_partition(void)
 	}
 
 	table->size = sizeof(struct ultrix_disklabel);
-	table->offset = ((16384 - table->size) / 512) + 512 - table->size;
+	table->sector = (16384 - table->size)/512;
+	table->offset = 512 - table->size;
 
 	label = calloc(sizeof(struct ultrix_disklabel), 1);
 	if (!label)
@@ -356,7 +359,8 @@ int main(int argc, char **argv)
 
 	debug(cfg, "partition->offset: %d\n", partition->offset);
 	debug(cfg, "partition->size: %lu\n", partition->size);
-	lseek(fd, partition->offset, SEEK_SET);
+	offset = (partition->sector * 512) + partition->offset;
+	lseek(fd, offset, SEEK_SET);
 
 	written = write(fd, partition->part, partition->size);
 	if (written < 0) {
