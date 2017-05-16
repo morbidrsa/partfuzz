@@ -85,6 +85,24 @@ struct osf_disklabel {
 
 } __attribute__((packed));
 
+struct sysv68_dkblk0 {
+	struct volumeid {
+		uint8_t vid_unused[248];
+		uint8_t vid_mac[8]; /* ASCII string "MOTOROLA" */
+	} dk_vid;
+	struct dkconfig {
+		uint8_t ios_unused0[128];
+		uint32_t ios_slcblk; /* TODO: Big Endian */
+		uint16_t ios_slccnt; /* Number of entries in slice table BE */
+		uint8_t ios_unused1[122];
+	} dk_ios;
+} __attribute__((packed));
+
+struct sysv68_slice {
+	uint32_t nblocks; /* TODO: Big Endian */
+	uint32_t blkoff; /* TODO: Big Endian */
+} __attribute__((packed));
+
 enum partition_type {
 	ULTRIX_PARTITION_TYPE,
 	OSF_PARTITION_TYPE,
