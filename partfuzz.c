@@ -107,6 +107,7 @@ struct sysv68_dkblk0 {
 enum partition_type {
 	ULTRIX_PARTITION_TYPE,
 	OSF_PARTITION_TYPE,
+	SYSV68_PARTITION_TYPE,
 };
 
 static struct {
@@ -115,6 +116,7 @@ static struct {
 } pt_table[] = {
 	{ .name = "ultrix", .ptype = ULTRIX_PARTITION_TYPE },
 	{ .name = "osf", .ptype = OSF_PARTITION_TYPE },
+	{ .name = "sysv68", .ptype = SYSV68_PARTITION_TYPE },
 };
 
 struct partition_table {
@@ -134,6 +136,56 @@ static struct {
 	if (cfg.dbg)				\
 		printf(fmt, __VA_ARGS__);	\
 } while(0)
+
+static struct partition_table *generate_sysv68_partition(void)
+{
+	struct partition_table *table;
+	struct sysv68_dkblk0 *label;
+	struct volumeid *dk_vid;
+	struct dkconfig *dk_ios;
+	struct sysv68_slice *slice;
+	uint16_t slices;
+	uint16_t slices2;
+	size_t alloc_size;
+	int i;
+
+	table = calloc(sizeof(struct partition_table), 1);
+	if (!table) {
+		errno = ENOMEM;
+		return NULL;
+	}
+
+	slices = rand() % USHRT_MAX;
+
+	alloc_size = sizeof(struct sysv68_dkblk0) +
+		     (sizeof(struct sysv68_slice) * slices);
+	label = calloc(alloc_size, 1);
+	if (!label) {
+		errno = ENOMEM;
+		goto out_free_table;
+
+
+	}
+
+	dk_vid = &label->dk_vid;
+	memcpy(dk_vid->vid_mac, "MOTOROLA", sizeof(dk_vid->vid_mac));
+
+	dk_ios = &label->dk_ios;
+	dk_ios->ios_slccnt = slices;
+
+	slices2 = rand() % slices;
+	for (i = 0; i < slices2; i++) {
+		slice = &label->slices[i];
+		slice->nblocks = rand() % UINT_MAX;
+		slice->blkoff = rand() % UINT_MAX;
+	}
+
+	return table;
+
+out_free_table:
+	free(table);
+	return NULL;
+}
 
 static struct partition_table *generate_osf_partition(void)
 {
@@ -277,6 +329,8 @@ static struct partition_table *generate_partition(enum partition_type ptype)
 		return generate_ultrix_partition();
 	case OSF_PARTITION_TYPE:
 		return generate_osf_partition();
+	case SYSV68_PARTITION_TYPE:
+		return generate_sysv68_partition();
 	default:
 		return NULL;
 	}
