@@ -1,9 +1,9 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -std=c99 -pedantic
+CFLAGS=-Wall -Wextra -std=c99
 PROG=partfuzz
 
 ifeq ("$(origin DEBUGFLAGS)","command line")
-	CFLAGS+=-ggdb
+	CFLAGS+=-ggdb -O0
 else
 	CFLAGS+=-O2
 endif
