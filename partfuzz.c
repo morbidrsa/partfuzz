@@ -94,13 +94,13 @@ struct sysv68_dkblk0 {
 	} dk_vid;
 	struct dkconfig {
 		uint8_t ios_unused0[128];
-		uint32_t ios_slcblk; /* TODO: Big Endian */
-		uint16_t ios_slccnt; /* Number of entries in slice table BE */
+		uint32_t ios_slcblk;
+		uint16_t ios_slccnt;
 		uint8_t ios_unused1[122];
 	} dk_ios;
 	struct sysv68_slice {
-		uint32_t nblocks; /* TODO: Big Endian */
-		uint32_t blkoff; /* TODO: Big Endian */
+		uint32_t nblocks;
+		uint32_t blkoff;
 	} slices[0];
 } __attribute__((packed));
 
@@ -147,6 +147,7 @@ static struct partition_table *generate_sysv68_partition(void)
 	uint16_t slices;
 	uint16_t slices2;
 	size_t alloc_size;
+	uint32_t slice_offset;
 	int i;
 
 	table = calloc(sizeof(struct partition_table), 1);
@@ -157,7 +158,8 @@ static struct partition_table *generate_sysv68_partition(void)
 
 	slices = rand() % USHRT_MAX;
 
-	alloc_size = sizeof(struct sysv68_dkblk0) +
+	slice_offset = 512 + sizeof(struct sysv68_dkblk0);
+	alloc_size = sizeof(struct sysv68_dkblk0) + slice_offset +
 		     (sizeof(struct sysv68_slice) * slices);
 	label = calloc(alloc_size, 1);
 	if (!label) {
@@ -171,13 +173,14 @@ static struct partition_table *generate_sysv68_partition(void)
 	memcpy(dk_vid->vid_mac, "MOTOROLA", sizeof(dk_vid->vid_mac));
 
 	dk_ios = &label->dk_ios;
-	dk_ios->ios_slccnt = slices;
+	dk_ios->ios_slccnt = cpu_to_be16(slices);
+	dk_ios->ios_slcblk = cpu_to_be32(1);
 
 	slices2 = rand() % slices;
 	for (i = 0; i < slices2; i++) {
 		slice = &label->slices[i];
-		slice->nblocks = rand() % UINT_MAX;
-		slice->blkoff = rand() % UINT_MAX;
+		slice->nblocks = cpu_to_be32(rand() % UINT_MAX);
+		slice->blkoff = cpu_to_be32(rand() % UINT_MAX);
 	}
 
 	return table;
