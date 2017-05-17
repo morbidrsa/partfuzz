@@ -28,6 +28,8 @@
 #include <fcntl.h>
 #include <getopt.h>
 
+#include "byteorder.h"
+
 extern int errno;
 extern int optind;
 
