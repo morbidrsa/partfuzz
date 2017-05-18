@@ -8,16 +8,32 @@ else
 	CFLAGS+=-O2
 endif
 
+ifeq ("$(origin V)", "command line")
+	BUILD_VERBOSE = $(V)
+endif
+ifndef BUILD_VERBOSE
+	BUILD_VERBOSE = 0
+endif
+
+ifeq ($(BUILD_VERBOSE), 1)
+	Q =
+else
+	Q = @
+endif
+
 all: $(PROG)
 
 OBJS := partfuzz.o
 
 $(PROG): $(OBJS)
-	$(CC) $< -o $@
+	@echo "    [LD]    $@"
+	$(Q)$(CC) $< -o $@
 
-*.o: *.c
-	$(CC) $(CFLAGS) -c $<
+$(OBJS): *.c
+	@echo "    [CC]    $@"
+	$(Q)$(CC) $(CFLAGS) -c $<
 
 .PHONY: clean
 clean:
-	rm -f *.o $(PROG)
+	@echo "    [CLEAN] partfuzz"
+	$(Q)rm -f *.o $(PROG)
