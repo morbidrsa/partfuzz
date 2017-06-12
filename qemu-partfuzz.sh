@@ -66,7 +66,7 @@ main()
 	local kernel=$1
 	local initrd=$2
 
-	for pt in "ultrix osf"; do
+	for pt in "ultrix osf sysv68"; do
 		for i in `seq 1 10000`; do
 			run_one_test $kernel $initrd $pt
 		done
