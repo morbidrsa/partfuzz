@@ -23,15 +23,15 @@ endif
 
 all: $(PROG)
 
-OBJS := partfuzz.o
+OBJS := partfuzz.o ultrix.o osf.o sysv68.o
 
 $(PROG): $(OBJS)
 	@echo "    [LD]    $@"
-	$(Q)$(CC) $< -o $@
+	$(Q)$(CC) -o $@ $(OBJS)
 
-$(OBJS): *.c
+%.o: %.c
 	@echo "    [CC]    $@"
-	$(Q)$(CC) $(CFLAGS) -c $<
+	$(Q)$(CC) $(CFLAGS) -c $^
 
 .PHONY: clean
 clean:
