@@ -5,6 +5,7 @@ code in the Linux kernel.
 It currently supports the following partition types:
 1. Ultrix
 2. OSF
+3. System V 68
 
 A sample shell script to pass a generated disk image to Qemu is provided in
 the qemu-partfuzz.sh shell script.
