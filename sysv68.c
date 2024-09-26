@@ -43,8 +43,6 @@ struct partition_table *generate_sysv68_partition(struct pf_ctx ctx)
 	struct partition_table *table;
 	struct sysv68_dkblk0 *label;
 	struct volumeid *dk_vid;
-	struct dkconfig *dk_ios;
-	struct sysv68_slice *slice;
 	uint16_t slices;
 	uint16_t slices2;
 	size_t alloc_size;
@@ -75,15 +73,13 @@ struct partition_table *generate_sysv68_partition(struct pf_ctx ctx)
 	dk_vid = &label->dk_vid;
 	memcpy(dk_vid->vid_mac, "MOTOROLA", sizeof(dk_vid->vid_mac));
 
-	dk_ios = &label->dk_ios;
-	dk_ios->ios_slccnt = cpu_to_be16(slices);
-	dk_ios->ios_slcblk = cpu_to_be32(1);
+	label->dk_ios.ios_slccnt = cpu_to_be16(slices);
+	label->dk_ios.ios_slcblk = cpu_to_be32(1);
 
 	slices2 = rand() % slices;
 	for (i = 0; i < slices2; i++) {
-		slice = &label->slices[i];
-		slice->nblocks = cpu_to_be32(rand() % UINT_MAX);
-		slice->blkoff = cpu_to_be32(rand() % UINT_MAX);
+		label->slices[i].nblocks = cpu_to_be32(rand() % UINT_MAX);
+		label->slices[i].blkoff = cpu_to_be32(rand() % UINT_MAX);
 	}
 
 	return table;
