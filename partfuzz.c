@@ -53,17 +53,18 @@ static const char *part2str(enum partition_type ptype)
 	return "UNKNOWN";
 }
 
-static struct partition_table *generate_partition(enum partition_type ptype)
+static struct partition_table *generate_partition(struct pf_ctx ctx,
+						  enum partition_type ptype)
 {
-	debug(cfg, "generating %s partition\n", part2str(ptype));
+	debug(ctx, "generating %s partition\n", part2str(ptype));
 
 	switch (ptype) {
 	case ULTRIX_PARTITION_TYPE:
-		return generate_ultrix_partition();
+		return generate_ultrix_partition(ctx);
 	case OSF_PARTITION_TYPE:
-		return generate_osf_partition();
+		return generate_osf_partition(ctx);
 	case SYSV68_PARTITION_TYPE:
-		return generate_sysv68_partition();
+		return generate_sysv68_partition(ctx);
 	default:
 		return NULL;
 	}
@@ -110,6 +111,7 @@ int main(int argc, char **argv)
 	ssize_t written;
 	off_t offset;
 	off_t disksize = 2199023255552; /* 2TB */
+	struct pf_ctx ctx = { };
 	int opt;
 	int fd;
 
@@ -124,7 +126,7 @@ int main(int argc, char **argv)
 
 		switch (opt) {
 		case 'd':
-			cfg.dbg = 1;
+			ctx.dbg = 1;
 			break;
 		case 't':
 			ptype = str2part(optarg);
@@ -157,14 +159,14 @@ int main(int argc, char **argv)
 		goto out_close;
 	}
 
-	partition = generate_partition(ptype);
+	partition = generate_partition(ctx, ptype);
 	if (!partition) {
 		perror("generate_partition()");
 		goto out_close;
 	}
 
-	debug(cfg, "partition->offset: %d\n", partition->offset);
-	debug(cfg, "partition->size: %lu\n", partition->size);
+	debug(ctx, "partition->offset: %d\n", partition->offset);
+	debug(ctx, "partition->size: %lu\n", partition->size);
 	offset = (partition->sector * 512) + partition->offset;
 	lseek(fd, offset, SEEK_SET);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 Johannes Thumshirn <jthumshirn@suse.de>
+ * Copyright (c) 2016 - 2024 Johannes Thumshirn <jth@kernel.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
@@ -31,7 +31,7 @@ struct ultrix_disklabel {
 	} pt_part[8];
 } __attribute__((packed));
 
-struct partition_table *generate_ultrix_partition(void)
+struct partition_table *generate_ultrix_partition(struct pf_ctx ctx)
 {
 	struct partition_table *table;
 	struct ultrix_disklabel *label;
@@ -56,18 +56,18 @@ struct partition_table *generate_ultrix_partition(void)
 
 	label->pt_magic = ULTRIX_PARTITION_MAGIC;
 	label->pt_valid = ULTRIX_PARTITION_VALID;
-	debug(cfg, "label->pt_magic: 0x%x, label->pt_valid: %d\n",
+	debug(ctx, "label->pt_magic: 0x%x, label->pt_valid: %d\n",
 	      label->pt_magic, label->pt_valid);
 
 	numparts = rand() % 8;
 
 	for (i = 0; i < numparts; i++) {
 		label->pt_part[i].pi_nblocks = rand() % INT_MAX;
-		debug(cfg, "label->pt_part[%d].pi_nblocks: 0x%08x (%d)\n",
+		debug(ctx, "label->pt_part[%d].pi_nblocks: 0x%08x (%d)\n",
 		      i,label->pt_part[i].pi_nblocks,
 		      label->pt_part[i].pi_nblocks);
 		label->pt_part[i].pi_blkoff = rand() % UINT_MAX;
-		debug(cfg, "label->pt_part[%d].pi_blkoff: 0x%08x (%u)\n",
+		debug(ctx, "label->pt_part[%d].pi_blkoff: 0x%08x (%u)\n",
 		      i, label->pt_part[i].pi_blkoff,
 		      label->pt_part[i].pi_blkoff);
 	}

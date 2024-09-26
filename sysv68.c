@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 Johannes Thumshirn <jthumshirn@suse.de>
+ * Copyright (c) 2016 - 2024 Johannes Thumshirn <jth@kernel.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
@@ -38,7 +38,7 @@ struct sysv68_dkblk0 {
 	} slices[0];
 } __attribute__((packed));
 
-struct partition_table *generate_sysv68_partition(void)
+struct partition_table *generate_sysv68_partition(struct pf_ctx ctx)
 {
 	struct partition_table *table;
 	struct sysv68_dkblk0 *label;
@@ -50,6 +50,8 @@ struct partition_table *generate_sysv68_partition(void)
 	size_t alloc_size;
 	uint32_t slice_offset;
 	int i;
+
+	(void) ctx;
 
 	table = calloc(sizeof(struct partition_table), 1);
 	if (!table) {

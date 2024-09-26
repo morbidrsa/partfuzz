@@ -31,17 +31,17 @@ struct partition_table {
 	unsigned int offset;
 };
 
-struct {
+struct pf_ctx {
 	bool dbg;
-} cfg;
+};
 
 #define debug(cfg, fmt, ...) do {		\
 	if (cfg.dbg)				\
 		printf(fmt, __VA_ARGS__);	\
 } while(0)
 
-struct partition_table *generate_osf_partition(void);
-struct partition_table *generate_sysv68_partition(void);
-struct partition_table *generate_ultrix_partition(void);
+struct partition_table *generate_osf_partition(struct pf_ctx ctx);
+struct partition_table *generate_sysv68_partition(struct pf_ctx ctx);
+struct partition_table *generate_ultrix_partition(struct pf_ctx ctx);
 
 #endif

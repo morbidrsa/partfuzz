@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 Johannes Thumshirn <jthumshirn@suse.de>
+ * Copyright (c) 2016 - 2024 Johannes Thumshirn <jth@kernel.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
@@ -64,12 +64,14 @@ struct osf_disklabel {
 
 } __attribute__((packed));
 
-struct partition_table *generate_osf_partition(void)
+struct partition_table *generate_osf_partition(struct pf_ctx ctx)
 {
 	struct partition_table *table;
 	struct osf_disklabel *label;
 	int numparts;
 	int i;
+
+	(void)ctx;
 
 	table = calloc(sizeof(struct partition_table), 1);
 	if (!table) {
