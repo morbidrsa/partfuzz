@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 Johannes Thumshirn <jthumshirn@suse.de>
+ * Copyright (c) 2016-2024 Johannes Thumshirn <jth@kernel.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
@@ -40,8 +40,8 @@ struct {
 		printf(fmt, __VA_ARGS__);	\
 } while(0)
 
-extern struct partition_table *generate_osf_partition(void);
-extern struct partition_table *generate_sysv68_partition(void);
-extern struct partition_table *generate_ultrix_partition(void);
+struct partition_table *generate_osf_partition(void);
+struct partition_table *generate_sysv68_partition(void);
+struct partition_table *generate_ultrix_partition(void);
 
 #endif
