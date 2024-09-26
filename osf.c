@@ -90,8 +90,8 @@ struct partition_table *generate_osf_partition(struct pf_ctx ctx)
 	label->magic = OSF_MAGIC;
 	label->type = rand() % USHRT_MAX;
 	label->subtype = rand() % USHRT_MAX;
-	memcpy(label->typename, "PARTFUZZ", sizeof(label->typename));
-	memcpy(label->packname, "PARTFUZZ", sizeof(label->packname));
+	memset(&label->typename, 0, sizeof(label->typename));
+	memset(&label->packname, 0, sizeof(label->packname));
 	label->secsize = rand() % UINT_MAX;
 	label->nsectors = rand() % UINT_MAX;
 	label->ntracks = rand() % UINT_MAX;
