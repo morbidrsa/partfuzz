@@ -12,6 +12,7 @@
  */
 
 #define _POSIX_C_SOURCE 200112L
+#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,6 +25,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <linux/loop.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -104,7 +106,6 @@ static void usage(const char *pname)
 
 int main(int argc, char **argv)
 {
-	char *tmpfile;
 	char *progname;
 	struct partition_table *partition;
 	enum partition_type ptype = ULTRIX_PARTITION_TYPE;
@@ -115,7 +116,7 @@ int main(int argc, char **argv)
 	struct loop_config loop_config = { };
 	int opt;
 	int loopfd;
-	int fd;
+	int memfd;
 	int ret;
 
 	srand(time(NULL));
@@ -144,20 +145,18 @@ int main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 1) {
+	if (argc != 0) {
 		usage(progname);
 		return 1;
 	}
 
-	tmpfile = argv[0];
-
-	fd = open(tmpfile, O_RDWR);
-	if (fd < 0) {
-		perror("open()");
-		return 1;
+	memfd = memfd_create("partfuzz", 0);
+	if (memfd < 0) {
+		  perror("memfd_create()");
+		  return 1;
 	}
 
-	if (ftruncate(fd, disksize)) {
+	if (ftruncate(memfd, disksize)) {
 		perror("ftruncate()");
 		goto out_close;
 	}
@@ -171,9 +170,9 @@ int main(int argc, char **argv)
 	debug(ctx, "partition->offset: %d\n", partition->offset);
 	debug(ctx, "partition->size: %lu\n", partition->size);
 	offset = (partition->sector * 512) + partition->offset;
-	lseek(fd, offset, SEEK_SET);
+	lseek(memfd, offset, SEEK_SET);
 
-	written = write(fd, partition->part, partition->size);
+	written = write(memfd, partition->part, partition->size);
 	if (written < 0) {
 		perror("write()");
 		goto out_free_part;
@@ -185,7 +184,7 @@ int main(int argc, char **argv)
 		goto out_free_part;
 	}
 
-	loop_config.fd = fd;
+	loop_config.fd = memfd;
 	loop_config.block_size = 512;
 	loop_config.info.lo_flags = LO_FLAGS_READ_ONLY | LO_FLAGS_PARTSCAN;
 
@@ -207,7 +206,7 @@ out_free_part:
 	free(partition->part);
 	free(partition);
 out_close:
-	close(fd);
+	close(memfd);
 
 	return 0;
 }
