@@ -23,6 +23,8 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <linux/loop.h>
 #include <fcntl.h>
 #include <getopt.h>
 
@@ -110,8 +112,11 @@ int main(int argc, char **argv)
 	off_t offset;
 	off_t disksize = 2199023255552; /* 2TB */
 	struct pf_ctx ctx = { };
+	struct loop_config loop_config = { };
 	int opt;
+	int loopfd;
 	int fd;
+	int ret;
 
 	srand(time(NULL));
 
@@ -174,6 +179,30 @@ int main(int argc, char **argv)
 		goto out_free_part;
 	}
 
+	loopfd = open("/dev/loop0", O_RDWR);
+	if (loopfd < 0) {
+		perror("open() loopfd");
+		goto out_free_part;
+	}
+
+	loop_config.fd = fd;
+	loop_config.block_size = 512;
+	loop_config.info.lo_flags = LO_FLAGS_READ_ONLY | LO_FLAGS_PARTSCAN;
+
+	ret = ioctl(loopfd, LOOP_CONFIGURE, &loop_config);
+	if (ret < 0) {
+		perror("ioctl() LOOP_CONFIGURE");
+		goto out_close_loopfd;
+	}
+
+	ret = ioctl(loopfd, LOOP_CLR_FD, 0);
+	if (ret < 0) {
+		  perror("ioctl() LOOP_CTL_REMOVE");
+		  goto out_close_loopfd;
+	}
+
+out_close_loopfd:
+	close(loopfd);
 out_free_part:
 	free(partition->part);
 	free(partition);
