@@ -97,7 +97,7 @@ static void usage(const char *pname)
 	printf("Usage: %s [options] tmpfile\n", pname);
 	printf("\n");
 	printf("\t-d --debug          enable debugging\n");
-	printf("\t-t --partition-type generate a specific partition\n");
+	printf("\t-t --partition-type generate a specific partition (default: ultrix)\n");
 	printf("\tvalid partition types are:\n");
 	for (i = 0; i < ARRAY_SIZE(pt_table); ++i)
 		printf("\t    %s\n", pt_table[i].name);
