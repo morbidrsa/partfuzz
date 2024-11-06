@@ -1,3 +1,4 @@
 *.o
 partfuzz
 compile_commands.json
+.cache/
