@@ -138,14 +138,48 @@ out_close_loopfd:
 	return ret;
 }
 
+static int write_part_to_memfd(struct pf_ctx ctx,
+                               struct partition_table *partition)
+{
+	ssize_t written;
+	off_t offset;
+	off_t disksize = 2199023255552; /* 2TB */
+	int memfd;
+
+	memfd = memfd_create("partfuzz", 0);
+	if (memfd < 0) {
+		perror("memfd_create()");
+		return -1;
+	}
+
+	if (ftruncate(memfd, disksize)) {
+		perror("ftruncate()");
+		goto out;
+	}
+
+	debug(ctx, "partition->offset: %d\n", partition->offset);
+	debug(ctx, "partition->size: %lu\n", partition->size);
+	offset = (partition->sector * 512) + partition->offset;
+	lseek(memfd, offset, SEEK_SET);
+
+	written = write(memfd, partition->part, partition->size);
+	if (written < 0) {
+		perror("write()");
+		goto out;
+	}
+
+	return memfd;
+
+out:
+	close(memfd);
+	return -1;
+}
+
 int main(int argc, char **argv)
 {
 	char *progname;
 	struct partition_table *partition = NULL;
 	enum partition_type ptype = ULTRIX_PARTITION_TYPE;
-	ssize_t written;
-	off_t offset;
-	off_t disksize = 2199023255552; /* 2TB */
 	struct pf_ctx ctx = { };
 	int opt;
 	int memfd;
@@ -188,25 +222,9 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	memfd = memfd_create("partfuzz", 0);
-	if (memfd < 0) {
-		  perror("memfd_create()");
-		  goto free_table;
-	}
-
-	if (ftruncate(memfd, disksize)) {
-		perror("ftruncate()");
-		goto out_close;
-	}
-
-	debug(ctx, "partition->offset: %d\n", partition->offset);
-	debug(ctx, "partition->size: %lu\n", partition->size);
-	offset = (partition->sector * 512) + partition->offset;
-	lseek(memfd, offset, SEEK_SET);
-
-	written = write(memfd, partition->part, partition->size);
-	if (written < 0) {
-		perror("write()");
+        memfd = write_part_to_memfd(ctx, partition);
+	if (memfd < 1) {
+		ret = memfd;
 		goto out_free_part;
 	}
 
@@ -215,10 +233,7 @@ int main(int argc, char **argv)
 out_free_part:
 	free(partition->part);
 	free(partition);
-out_close:
 	close(memfd);
-free_table:
-	free(partition);
 
 	return ret;
 }
