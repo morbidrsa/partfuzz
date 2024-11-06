@@ -149,7 +149,7 @@ int main(int argc, char **argv)
 	struct pf_ctx ctx = { };
 	int opt;
 	int memfd;
-	int ret;
+	int ret = 0;
 
 	srand(time(NULL));
 
