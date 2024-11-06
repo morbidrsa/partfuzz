@@ -86,6 +86,7 @@ static enum partition_type str2part(const char *name)
 static struct option options[] = {
 	{ "debug",		no_argument,       NULL, 'd'},
 	{ "partition-type",	required_argument, NULL, 't'},
+	{ "seed",		required_argument, NULL, 's'},
 	{ "help",               no_argument,       NULL, 'h'},
 	{ NULL,    0,           NULL,   0 },
 };
@@ -97,6 +98,7 @@ static void usage(const char *pname)
 	printf("Usage: %s [options] tmpfile\n", pname);
 	printf("\n");
 	printf("\t-d --debug          enable debugging\n");
+	printf("\t-s --seed           set randomization seed to argument\n");
 	printf("\t-t --partition-type generate a specific partition (default: ultrix)\n");
 	printf("\tvalid partition types are:\n");
 	for (i = 0; i < ARRAY_SIZE(pt_table); ++i)
@@ -183,14 +185,13 @@ int main(int argc, char **argv)
 	struct pf_ctx ctx = { };
 	int opt;
 	int memfd;
+	unsigned int seed = time(NULL);
 	int ret = 0;
-
-	srand(time(NULL));
 
 	progname = basename(argv[0]);
 
 	while (1) {
-		opt = getopt_long(argc, argv, "dt:h", options, NULL);
+		opt = getopt_long(argc, argv, "dt:s:h", options, NULL);
 		if (opt < 1)
 			break;
 
@@ -200,6 +201,9 @@ int main(int argc, char **argv)
 			break;
 		case 't':
 			ptype = str2part(optarg);
+			break;
+		case 's':
+			seed = atoi(optarg);
 			break;
 		case 'h':
 		default:
@@ -215,6 +219,9 @@ int main(int argc, char **argv)
 		usage(progname);
 		return 1;
 	}
+
+	debug(ctx, "seed=%d\n", seed);
+	srand(seed);
 
 	partition = generate_partition(ctx, ptype);
 	if (!partition) {
