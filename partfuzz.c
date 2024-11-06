@@ -104,6 +104,40 @@ static void usage(const char *pname)
 
 }
 
+static int loop_mount_partition(int memfd)
+{
+	struct loop_config loop_config = { };
+	int ret;
+	int loopfd;
+
+	loopfd = open("/dev/loop0", O_RDWR);
+	if (loopfd < 0) {
+		perror("open() loopfd");
+		return -1;
+	}
+
+	loop_config.fd = memfd;
+	loop_config.block_size = 512;
+	loop_config.info.lo_flags = LO_FLAGS_READ_ONLY | LO_FLAGS_PARTSCAN;
+
+	ret = ioctl(loopfd, LOOP_CONFIGURE, &loop_config);
+	if (ret < 0) {
+		perror("ioctl() LOOP_CONFIGURE");
+		goto out_close_loopfd;
+	}
+
+	ret = ioctl(loopfd, LOOP_CLR_FD, 0);
+	if (ret < 0) {
+		  perror("ioctl() LOOP_CTL_REMOVE");
+		  goto out_close_loopfd;
+	}
+
+out_close_loopfd:
+	close(loopfd);
+
+	return ret;
+}
+
 int main(int argc, char **argv)
 {
 	char *progname;
@@ -113,9 +147,7 @@ int main(int argc, char **argv)
 	off_t offset;
 	off_t disksize = 2199023255552; /* 2TB */
 	struct pf_ctx ctx = { };
-	struct loop_config loop_config = { };
 	int opt;
-	int loopfd;
 	int memfd;
 	int ret;
 
@@ -178,35 +210,13 @@ int main(int argc, char **argv)
 		goto out_free_part;
 	}
 
-	loopfd = open("/dev/loop0", O_RDWR);
-	if (loopfd < 0) {
-		perror("open() loopfd");
-		goto out_free_part;
-	}
+        ret = loop_mount_partition(memfd);
 
-	loop_config.fd = memfd;
-	loop_config.block_size = 512;
-	loop_config.info.lo_flags = LO_FLAGS_READ_ONLY | LO_FLAGS_PARTSCAN;
-
-	ret = ioctl(loopfd, LOOP_CONFIGURE, &loop_config);
-	if (ret < 0) {
-		perror("ioctl() LOOP_CONFIGURE");
-		goto out_close_loopfd;
-	}
-
-	ret = ioctl(loopfd, LOOP_CLR_FD, 0);
-	if (ret < 0) {
-		  perror("ioctl() LOOP_CTL_REMOVE");
-		  goto out_close_loopfd;
-	}
-
-out_close_loopfd:
-	close(loopfd);
 out_free_part:
 	free(partition->part);
 	free(partition);
 out_close:
 	close(memfd);
 
-	return 0;
+	return ret;
 }
