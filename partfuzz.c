@@ -141,7 +141,7 @@ out_close_loopfd:
 int main(int argc, char **argv)
 {
 	char *progname;
-	struct partition_table *partition;
+	struct partition_table *partition = NULL;
 	enum partition_type ptype = ULTRIX_PARTITION_TYPE;
 	ssize_t written;
 	off_t offset;
@@ -182,20 +182,20 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	partition = generate_partition(ctx, ptype);
+	if (!partition) {
+		perror("generate_partition()");
+		return 1;
+	}
+
 	memfd = memfd_create("partfuzz", 0);
 	if (memfd < 0) {
 		  perror("memfd_create()");
-		  return 1;
+		  goto free_table;
 	}
 
 	if (ftruncate(memfd, disksize)) {
 		perror("ftruncate()");
-		goto out_close;
-	}
-
-	partition = generate_partition(ctx, ptype);
-	if (!partition) {
-		perror("generate_partition()");
 		goto out_close;
 	}
 
@@ -217,6 +217,8 @@ out_free_part:
 	free(partition);
 out_close:
 	close(memfd);
+free_table:
+	free(partition);
 
 	return ret;
 }
