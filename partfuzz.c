@@ -87,6 +87,7 @@ static struct option options[] = {
 	{ "debug",		no_argument,       NULL, 'd'},
 	{ "partition-type",	required_argument, NULL, 't'},
 	{ "seed",		required_argument, NULL, 's'},
+	{ "iterations",		required_argument, NULL, 'i'},
 	{ "help",               no_argument,       NULL, 'h'},
 	{ NULL,    0,           NULL,   0 },
 };
@@ -99,6 +100,7 @@ static void usage(const char *pname)
 	printf("\n");
 	printf("\t-d --debug          enable debugging\n");
 	printf("\t-s --seed           set randomization seed to argument\n");
+	printf("\t-i --iterations     set number of iterations to argument (default: 1)\n");
 	printf("\t-t --partition-type generate a specific partition (default: ultrix)\n");
 	printf("\tvalid partition types are:\n");
 	for (i = 0; i < ARRAY_SIZE(pt_table); ++i)
@@ -187,6 +189,7 @@ int main(int argc, char **argv)
 	int memfd;
 	unsigned int seed = time(NULL);
 	int ret = 0;
+	int iterations = 1;
 
 	progname = basename(argv[0]);
 
@@ -204,6 +207,9 @@ int main(int argc, char **argv)
 			break;
 		case 's':
 			seed = atoi(optarg);
+			break;
+		case 'i':
+			iterations = atoi(optarg);
 			break;
 		case 'h':
 		default:
@@ -223,19 +229,21 @@ int main(int argc, char **argv)
 	debug(ctx, "seed=%d\n", seed);
 	srand(seed);
 
-	partition = generate_partition(ctx, ptype);
-	if (!partition) {
-		perror("generate_partition()");
-		return 1;
-	}
+	for (int i = 0; i < iterations; i++) {
+		partition = generate_partition(ctx, ptype);
+		if (!partition) {
+			perror("generate_partition()");
+			return 1;
+		}
 
-        memfd = write_part_to_memfd(ctx, partition);
-	if (memfd < 1) {
-		ret = memfd;
-		goto out_free_part;
-	}
+		memfd = write_part_to_memfd(ctx, partition);
+		if (memfd < 1) {
+			ret = memfd;
+			goto out_free_part;
+		}
 
-        ret = loop_mount_partition(memfd);
+		ret = loop_mount_partition(memfd);
+	}
 
 out_free_part:
 	free(partition->part);
