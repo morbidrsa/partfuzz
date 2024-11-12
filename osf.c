@@ -83,15 +83,15 @@ struct partition_table *generate_osf_partition(struct pf_ctx ctx)
 	table->sector = 0;
 	table->offset = 64;
 
-	label = calloc(table->size, 1);
+	label = calloc(1, table->size);
 	if (!label)
 		goto free_table;
 
 	label->magic = OSF_MAGIC;
 	label->type = rand() % USHRT_MAX;
 	label->subtype = rand() % USHRT_MAX;
-	memset(&label->typename, 0, sizeof(label->typename));
-	memset(&label->packname, 0, sizeof(label->packname));
+	snprintf((char *)label->typename, sizeof(label->typename), "PARTFUZZ");
+	snprintf((char *)label->packname, sizeof(label->packname), "PARTFUZZ");
 	label->secsize = rand() % UINT_MAX;
 	label->nsectors = rand() % UINT_MAX;
 	label->ntracks = rand() % UINT_MAX;
